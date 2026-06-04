@@ -4,47 +4,59 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lizard Formatter</title>
-    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260603-2138">
-    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260603-2138">
-    <link rel="stylesheet" href="styles.css?v=20260603-2138">
+    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260603-2234">
+    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260603-2234">
+    <link rel="stylesheet" href="styles.css?v=20260603-2234">
   </head>
   <body>
     <main class="app-shell">
       <header class="top-bar">
         <div class="brand-lockup">
-          <img src="assets/yelling-lizard-logo.png?v=20260603-2138" alt="" class="brand-logo" width="72" height="72">
+          <img src="assets/yelling-lizard-logo.png?v=20260603-2234" alt="" class="brand-logo" width="72" height="72">
           <div>
             <p class="eyebrow">Lizard Formatter</p>
             <h1>Data workspace</h1>
           </div>
         </div>
-        <div class="toolbar" aria-label="Formatter controls">
-          <label class="field-label" for="format">Format</label>
-          <select id="format">
-            <option value="json">JSON</option>
-            <option value="xml">XML</option>
-          </select>
-
-          <label class="field-label" for="indent">Indent</label>
-          <select id="indent">
-            <option value="2">2 spaces</option>
-            <option value="4">4 spaces</option>
-            <option value="tab">Tab</option>
-          </select>
-
-          <label class="checkbox-control" for="sortKeys">
-            <input id="sortKeys" type="checkbox">
-            <span>Sort keys</span>
-          </label>
-
+        <div class="action-bar" aria-label="Formatter actions">
           <button id="formatButton" type="button" class="primary-button">Format</button>
           <button id="minifyButton" type="button">Minify</button>
-          <button id="unescapeButton" type="button">Unescape</button>
-          <button id="jsonToXmlButton" type="button">To XML</button>
           <button id="copyButton" type="button">Copy</button>
           <button id="clearButton" type="button" class="ghost-button">Clear</button>
         </div>
       </header>
+
+      <section class="control-panel" aria-label="Formatter controls">
+        <div class="control-group">
+          <span class="control-group-title">Settings</span>
+          <div class="control-row">
+            <label class="field-label" for="format">Format</label>
+            <select id="format">
+              <option value="json">JSON</option>
+              <option value="xml">XML</option>
+            </select>
+
+            <label class="field-label" for="indent">Indent</label>
+            <select id="indent">
+              <option value="2">2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-group-title">JSON tools</span>
+          <div class="control-row">
+            <label class="checkbox-control" for="sortKeys">
+              <input id="sortKeys" type="checkbox">
+              <span>Sort keys</span>
+            </label>
+            <button id="unescapeButton" type="button">Unescape</button>
+            <button id="jsonToXmlButton" type="button">To XML</button>
+          </div>
+        </div>
+      </section>
 
       <section class="status-row" aria-live="polite">
         <div id="status" class="status-pill status-idle">Ready</div>
@@ -84,11 +96,11 @@
         <span>Ready for tidy data.</span>
         <span>
           <a href="https://github.com/davidbreyer/lizard-formatter" target="_blank" rel="noreferrer">GitHub</a>
-          <span id="releaseStamp" data-version>Version: 20260603-2138</span>
+          <span id="releaseStamp" data-version>Version: 20260603-2234</span>
         </span>
       </footer>
     </main>
 
-    <script src="script.js?v=20260603-2138"></script>
+    <script src="script.js?v=20260603-2234"></script>
   </body>
 </html>
