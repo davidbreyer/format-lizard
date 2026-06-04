@@ -44,7 +44,7 @@ textarea {
   min-height: calc(100vh - 32px);
   margin: 16px auto;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   gap: 14px;
 }
 
@@ -247,6 +247,22 @@ textarea::placeholder {
   background: rgba(128, 162, 77, 0.045);
 }
 
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.app-footer [data-version] {
+  color: var(--accent);
+}
+
 @media (max-width: 920px) {
   .app-shell {
     width: min(100vw - 20px, 760px);
@@ -298,6 +314,11 @@ textarea::placeholder {
 
   .status-row {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .app-footer {
+    align-items: flex-start;
     flex-direction: column;
   }
 

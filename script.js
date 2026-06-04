@@ -10,6 +10,9 @@ const status = document.querySelector("#status");
 const stats = document.querySelector("#stats");
 const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
+const releaseStamp = document.querySelector("#releaseStamp");
+
+const appRelease = "20260603-2027";
 
 const sampleJson = {
   project: "Lizard Formatter",
@@ -23,6 +26,7 @@ const sampleJson = {
 };
 
 sourceInput.value = JSON.stringify(sampleJson);
+renderReleaseStamp();
 formatJson();
 
 formatButton.addEventListener("click", formatJson);
@@ -126,4 +130,10 @@ function getLineAndColumn(text, position) {
 
 function formatCount(value) {
   return `${value.toLocaleString()} ${value === 1 ? "char" : "chars"}`;
+}
+
+function renderReleaseStamp() {
+  if (releaseStamp) {
+    releaseStamp.textContent = `Version: ${appRelease}`;
+  }
 }
