@@ -2,7 +2,7 @@
 
 A small JavaScript formatter app for JSON, XML, and YAML.
 
-Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json`, `.xml`, `.yaml`, or `.yml` file.
+Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json`, `.xml`, `.config`, `.yaml`, or `.yml` file.
 Then format or minify it into the right editor.
 Use `Save` to download the formatted output as a `.json`, `.xml`, or `.yaml` file.
 

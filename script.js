@@ -24,7 +24,7 @@ const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1858";
+const appRelease = "20260604-1912";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -248,15 +248,22 @@ function sortJsonKeys(value) {
 
 function formatXml(input) {
   const document = parseXml(input);
-  return formatXmlNode(document.documentElement, 0);
+  const declaration = getXmlDeclaration(input);
+  const body = Array.from(document.childNodes)
+    .map((node) => formatXmlNode(node, 0))
+    .filter(Boolean)
+    .join("\n");
+  return declaration ? `${declaration}\n${body}` : body;
 }
 
 function minifyXml(input) {
   const document = parseXml(input);
-  return new XMLSerializer()
+  const declaration = getXmlDeclaration(input);
+  const body = new XMLSerializer()
     .serializeToString(document)
     .replace(/>\s+</g, "><")
     .trim();
+  return declaration ? `${declaration}${stripXmlDeclaration(body)}` : body;
 }
 
 function parseXml(input) {
@@ -268,45 +275,100 @@ function parseXml(input) {
   return document;
 }
 
+function getXmlDeclaration(input) {
+  const match = input.trimStart().match(/^<\?xml\s+[^?]*\?>/i);
+  return match ? match[0] : "";
+}
+
+function stripXmlDeclaration(input) {
+  return input.replace(/^<\?xml\s+[^?]*\?>/i, "");
+}
+
 function formatXmlNode(node, level) {
+  if (node.nodeType === Node.PROCESSING_INSTRUCTION_NODE) {
+    return formatXmlProcessingInstruction(node, level);
+  }
+
+  if (node.nodeType === Node.COMMENT_NODE) {
+    return `${getIndentString().repeat(level)}<!--${node.nodeValue}-->`;
+  }
+
+  if (node.nodeType === Node.CDATA_SECTION_NODE) {
+    return `${getIndentString().repeat(level)}<![CDATA[${node.nodeValue}]]>`;
+  }
+
+  if (node.nodeType === Node.DOCUMENT_TYPE_NODE) {
+    return formatXmlDoctype(node, level);
+  }
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent.trim();
+    return text ? `${getIndentString().repeat(level)}${escapeXmlText(text)}` : "";
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return "";
+  }
+
   const indentation = getIndentString();
   const prefix = indentation.repeat(level);
   const attributes = formatXmlAttributes(node);
-  const childElements = Array.from(node.children);
-  const text = getOwnXmlText(node);
+  const childNodes = Array.from(node.childNodes).filter((child) => {
+    return child.nodeType !== Node.TEXT_NODE || child.textContent.trim();
+  });
 
-  if (!childElements.length) {
-    return text
-      ? `${prefix}<${node.nodeName}${attributes}>${escapeXmlText(text)}</${node.nodeName}>`
-      : `${prefix}<${node.nodeName}${attributes}></${node.nodeName}>`;
+  if (!childNodes.length) {
+    return `${prefix}<${node.nodeName}${attributes} />`;
+  }
+
+  if (childNodes.length === 1) {
+    const [child] = childNodes;
+    if (child.nodeType === Node.TEXT_NODE) {
+      return child.textContent.trim()
+        ? `${prefix}<${node.nodeName}${attributes}>${escapeXmlText(child.textContent.trim())}</${node.nodeName}>`
+        : `${prefix}<${node.nodeName}${attributes} />`;
+    }
+
+    if (child.nodeType === Node.CDATA_SECTION_NODE) {
+      return `${prefix}<${node.nodeName}${attributes}><![CDATA[${child.nodeValue}]]></${node.nodeName}>`;
+    }
   }
 
   const lines = [`${prefix}<${node.nodeName}${attributes}>`];
 
-  if (text) {
-    lines.push(`${indentation.repeat(level + 1)}${escapeXmlText(text)}`);
-  }
-
-  childElements.forEach((child) => {
-    lines.push(formatXmlNode(child, level + 1));
+  childNodes.forEach((child) => {
+    const formatted = formatXmlNode(child, level + 1);
+    if (formatted) {
+      lines.push(formatted);
+    }
   });
 
   lines.push(`${prefix}</${node.nodeName}>`);
   return lines.join("\n");
 }
 
+function formatXmlProcessingInstruction(node, level) {
+  const prefix = getIndentString().repeat(level);
+  return node.data
+    ? `${prefix}<?${node.nodeName} ${node.data}?>`
+    : `${prefix}<?${node.nodeName}?>`;
+}
+
+function formatXmlDoctype(node, level) {
+  const prefix = getIndentString().repeat(level);
+  if (node.publicId) {
+    return `${prefix}<!DOCTYPE ${node.name} PUBLIC "${node.publicId}" "${node.systemId}">`;
+  }
+
+  return node.systemId
+    ? `${prefix}<!DOCTYPE ${node.name} SYSTEM "${node.systemId}">`
+    : `${prefix}<!DOCTYPE ${node.name}>`;
+}
+
 function formatXmlAttributes(node) {
   return Array.from(node.attributes)
     .map((attribute) => ` ${attribute.name}="${escapeXmlText(attribute.value)}"`)
     .join("");
-}
-
-function getOwnXmlText(node) {
-  return Array.from(node.childNodes)
-    .filter((child) => child.nodeType === Node.TEXT_NODE)
-    .map((child) => child.textContent.trim())
-    .filter(Boolean)
-    .join(" ");
 }
 
 function formatYaml(input) {
@@ -740,7 +802,7 @@ function detectFormatFromFileName(fileName) {
     return "json";
   }
 
-  if (extension === "xml") {
+  if (extension === "xml" || extension === "config") {
     return "xml";
   }
 
