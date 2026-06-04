@@ -16,6 +16,7 @@ JSON tools:
 - Auto-detect JSON/XML from pasted content.
 - Sort object keys before formatting or minifying JSON.
 - Unescape JSON strings, such as `"{\"name\":\"Ada\"}"`, into editable JSON.
+- Convert JSON to XML.
 
 Good next candidates:
 

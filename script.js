@@ -6,6 +6,7 @@ const sortKeys = document.querySelector("#sortKeys");
 const formatButton = document.querySelector("#formatButton");
 const minifyButton = document.querySelector("#minifyButton");
 const unescapeButton = document.querySelector("#unescapeButton");
+const jsonToXmlButton = document.querySelector("#jsonToXmlButton");
 const copyButton = document.querySelector("#copyButton");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
@@ -14,7 +15,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260603-2128";
+const appRelease = "20260603-2138";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -58,6 +59,7 @@ formatInput();
 formatButton.addEventListener("click", formatInput);
 minifyButton.addEventListener("click", minifyInput);
 unescapeButton.addEventListener("click", unescapeJsonString);
+jsonToXmlButton.addEventListener("click", convertJsonToXml);
 copyButton.addEventListener("click", copyOutput);
 clearButton.addEventListener("click", clearEditors);
 sourceInput.addEventListener("input", handleInputChange);
@@ -291,6 +293,7 @@ function updateFormatControls() {
   const isJson = formatSelect.value === "json";
   sortKeys.disabled = !isJson;
   unescapeButton.disabled = !isJson;
+  jsonToXmlButton.disabled = !isJson;
 }
 
 function unescapeJsonString() {
@@ -320,6 +323,105 @@ function unescapeJsonString() {
   } catch (error) {
     setStatus(getJsonErrorMessage(error), "error");
   }
+}
+
+function convertJsonToXml() {
+  if (formatSelect.value !== "json") {
+    setStatus("JSON to XML is only available for JSON input.", "error");
+    return;
+  }
+
+  const input = sourceInput.value.trim();
+  if (!input) {
+    setStatus("Nothing to convert", "error");
+    return;
+  }
+
+  try {
+    const parsed = prepareJsonValue(JSON.parse(input));
+    formattedOutput.value = jsonValueToXmlDocument(parsed);
+    setStatus("Converted JSON to XML", "valid");
+  } catch (error) {
+    formattedOutput.value = "";
+    setStatus(getJsonErrorMessage(error), "error");
+  }
+
+  updateCounts();
+}
+
+function jsonValueToXmlDocument(value) {
+  const rootName = getJsonRootName(value);
+  const body = jsonValueToXml(value, rootName, 0);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${body}`;
+}
+
+function getJsonRootName(value) {
+  if (Array.isArray(value)) {
+    return "items";
+  }
+
+  return "root";
+}
+
+function jsonValueToXml(value, tagName, level) {
+  const indentation = getIndentString();
+  const safeTagName = toXmlTagName(tagName);
+  const prefix = indentation.repeat(level);
+
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return `${prefix}<${safeTagName}></${safeTagName}>`;
+    }
+
+    const childLines = value.map((item) => jsonValueToXml(item, "item", level + 1));
+    return [
+      `${prefix}<${safeTagName}>`,
+      ...childLines,
+      `${prefix}</${safeTagName}>`
+    ].join("\n");
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      return `${prefix}<${safeTagName}></${safeTagName}>`;
+    }
+
+    const childLines = entries.map(([key, childValue]) => jsonValueToXml(childValue, key, level + 1));
+    return [
+      `${prefix}<${safeTagName}>`,
+      ...childLines,
+      `${prefix}</${safeTagName}>`
+    ].join("\n");
+  }
+
+  if (value === null) {
+    return `${prefix}<${safeTagName} null="true"></${safeTagName}>`;
+  }
+
+  return `${prefix}<${safeTagName}>${escapeXmlText(String(value))}</${safeTagName}>`;
+}
+
+function toXmlTagName(value) {
+  const cleaned = String(value)
+    .trim()
+    .replace(/[^\w:.-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!cleaned) {
+    return "value";
+  }
+
+  return /^[A-Za-z_:]/.test(cleaned) ? cleaned : `_${cleaned}`;
+}
+
+function escapeXmlText(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 async function copyOutput() {
