@@ -4,6 +4,8 @@ A small JavaScript formatter app, starting with JSON.
 
 Open `index.html` in a browser, paste compact or messy JSON into the left editor, then format or minify it into the right editor.
 
+For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).
+
 ## GitHub Pages
 
 The site publishes from the remote `gh-pages` branch:
