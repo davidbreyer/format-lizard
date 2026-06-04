@@ -24,7 +24,7 @@ const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1842";
+const appRelease = "20260604-1858";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -37,27 +37,32 @@ const formatSamples = {
       futureFormats: ["xml", "yaml", "toml"]
     }
   }),
-  xml: '<project name="Format Lizard"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>'
+  xml: '<project name="Format Lizard"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>',
+  yaml: 'project: Format Lizard\nformat: yaml\nactive: true\nchecks:\n  - parse\n  - format\n  - copy\nnested:\n  indent: 2\n  futureFormats:\n    - json\n    - xml\n    - toml'
 };
 
 const formatLabels = {
   json: "JSON",
-  xml: "XML"
+  xml: "XML",
+  yaml: "YAML"
 };
 
 const fileExtensions = {
   json: "json",
-  xml: "xml"
+  xml: "xml",
+  yaml: "yaml"
 };
 
 const mimeTypes = {
   json: "application/json",
-  xml: "application/xml"
+  xml: "application/xml",
+  yaml: "application/yaml"
 };
 
 const placeholders = {
   json: '{"name":"Ada","tools":["logic","tea"],"ready":true}',
-  xml: '<project name="Ada"><tool>logic</tool><ready>true</ready></project>'
+  xml: '<project name="Ada"><tool>logic</tool><ready>true</ready></project>',
+  yaml: 'name: Ada\ntools:\n  - logic\n  - tea\nready: true'
 };
 
 const formatters = {
@@ -68,6 +73,10 @@ const formatters = {
   xml: {
     format: formatXml,
     minify: minifyXml
+  },
+  yaml: {
+    format: formatYaml,
+    minify: minifyYaml
   }
 };
 
@@ -300,6 +309,364 @@ function getOwnXmlText(node) {
     .join(" ");
 }
 
+function formatYaml(input) {
+  const parsed = parseYaml(input);
+  return stringifyYaml(parsed, 0);
+}
+
+function minifyYaml(input) {
+  const parsed = parseYaml(input);
+  return stringifyYaml(parsed, 0, { compact: true });
+}
+
+function parseYaml(input) {
+  const lines = normalizeYamlLines(input);
+  if (!lines.length) {
+    throw new Error("YAML is empty");
+  }
+
+  const [value, nextIndex] = parseYamlBlock(lines, 0, lines[0].indent);
+  if (nextIndex < lines.length) {
+    throw new Error(`Invalid YAML indentation at line ${lines[nextIndex].line}`);
+  }
+
+  return value;
+}
+
+function normalizeYamlLines(input) {
+  return input
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((rawLine, index) => {
+      if (/^\t+/.test(rawLine)) {
+        throw new Error(`YAML tabs are not supported at line ${index + 1}`);
+      }
+
+      const trimmedComment = stripYamlComment(rawLine);
+      if (!trimmedComment.trim()) {
+        return null;
+      }
+
+      return {
+        indent: trimmedComment.match(/^ */)[0].length,
+        text: trimmedComment.trim(),
+        line: index + 1
+      };
+    })
+    .filter(Boolean);
+}
+
+function stripYamlComment(line) {
+  let quote = null;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const previous = line[index - 1];
+
+    if ((char === "\"" || char === "'") && previous !== "\\") {
+      quote = quote === char ? null : quote || char;
+    }
+
+    if (char === "#" && !quote && (!index || /\s/.test(previous))) {
+      return line.slice(0, index).trimEnd();
+    }
+  }
+
+  return line.trimEnd();
+}
+
+function parseYamlBlock(lines, index, indent) {
+  if (index >= lines.length) {
+    return [null, index];
+  }
+
+  if (lines[index].indent < indent) {
+    return [null, index];
+  }
+
+  if (lines[index].indent !== indent) {
+    throw new Error(`Invalid YAML indentation at line ${lines[index].line}`);
+  }
+
+  return lines[index].text.startsWith("- ")
+    ? parseYamlSequence(lines, index, indent)
+    : parseYamlMapping(lines, index, indent);
+}
+
+function parseYamlMapping(lines, index, indent) {
+  const result = {};
+  let cursor = index;
+
+  while (cursor < lines.length) {
+    const line = lines[cursor];
+    if (line.indent < indent) {
+      break;
+    }
+
+    if (line.indent !== indent) {
+      throw new Error(`Invalid YAML indentation at line ${line.line}`);
+    }
+
+    if (line.text.startsWith("- ")) {
+      break;
+    }
+
+    const [key, rawValue] = splitYamlKeyValue(line.text, line.line);
+    cursor += 1;
+
+    if (rawValue) {
+      result[key] = parseYamlScalar(rawValue, line.line);
+      continue;
+    }
+
+    if (cursor < lines.length && lines[cursor].indent > indent) {
+      [result[key], cursor] = parseYamlBlock(lines, cursor, lines[cursor].indent);
+    } else {
+      result[key] = null;
+    }
+  }
+
+  return [result, cursor];
+}
+
+function parseYamlSequence(lines, index, indent) {
+  const result = [];
+  let cursor = index;
+
+  while (cursor < lines.length) {
+    const line = lines[cursor];
+    if (line.indent < indent) {
+      break;
+    }
+
+    if (line.indent !== indent || !line.text.startsWith("- ")) {
+      break;
+    }
+
+    const itemText = line.text.slice(2).trim();
+    cursor += 1;
+
+    if (!itemText) {
+      if (cursor < lines.length && lines[cursor].indent > indent) {
+        const parsed = parseYamlBlock(lines, cursor, lines[cursor].indent);
+        result.push(parsed[0]);
+        cursor = parsed[1];
+      } else {
+        result.push(null);
+      }
+      continue;
+    }
+
+    if (looksLikeYamlKeyValue(itemText)) {
+      const [key, rawValue] = splitYamlKeyValue(itemText, line.line);
+      const item = {};
+      item[key] = rawValue ? parseYamlScalar(rawValue, line.line) : null;
+
+      if (cursor < lines.length && lines[cursor].indent > indent) {
+        const parsed = parseYamlMapping(lines, cursor, lines[cursor].indent);
+        Object.assign(item, parsed[0]);
+        cursor = parsed[1];
+      }
+
+      result.push(item);
+      continue;
+    }
+
+    result.push(parseYamlScalar(itemText, line.line));
+  }
+
+  return [result, cursor];
+}
+
+function splitYamlKeyValue(text, lineNumber) {
+  const colonIndex = findYamlSeparator(text);
+  if (colonIndex < 1) {
+    throw new Error(`Invalid YAML mapping at line ${lineNumber}`);
+  }
+
+  const key = text.slice(0, colonIndex).trim();
+  const value = text.slice(colonIndex + 1).trim();
+  if (!key) {
+    throw new Error(`Invalid YAML key at line ${lineNumber}`);
+  }
+
+  return [unquoteYamlKey(key), value];
+}
+
+function findYamlSeparator(text) {
+  let quote = null;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+    const next = text[index + 1];
+
+    if ((char === "\"" || char === "'") && previous !== "\\") {
+      quote = quote === char ? null : quote || char;
+    }
+
+    if (char === ":" && !quote && (!next || /\s/.test(next))) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function looksLikeYamlKeyValue(text) {
+  return findYamlSeparator(text) > 0;
+}
+
+function unquoteYamlKey(key) {
+  if (
+    (key.startsWith("\"") && key.endsWith("\"")) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    return parseYamlScalar(key, 0);
+  }
+
+  return key;
+}
+
+function parseYamlScalar(value, lineNumber) {
+  if (!value) {
+    return null;
+  }
+
+  if (value.startsWith("[") || value.startsWith("{")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      throw new Error(`Unsupported YAML flow value at line ${lineNumber}`);
+    }
+  }
+
+  if (value.startsWith("\"") && value.endsWith("\"")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      throw new Error(`Invalid quoted YAML string at line ${lineNumber}`);
+    }
+  }
+
+  if (value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replace(/''/g, "'");
+  }
+
+  if (/^(true|false)$/i.test(value)) {
+    return value.toLowerCase() === "true";
+  }
+
+  if (/^(null|~)$/i.test(value)) {
+    return null;
+  }
+
+  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(value)) {
+    return Number(value);
+  }
+
+  return value;
+}
+
+function stringifyYaml(value, level, options = {}) {
+  const indentation = getIndentString();
+
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return "[]";
+    }
+
+    return value
+      .map((item) => {
+        const prefix = `${indentation.repeat(level)}-`;
+        if (isYamlScalar(item)) {
+          return `${prefix} ${formatYamlScalar(item)}`;
+        }
+
+        if (isPlainYamlObject(item)) {
+          return stringifyYamlSequenceObject(item, level, options);
+        }
+
+        return `${prefix}\n${stringifyYaml(item, level + 1, options)}`;
+      })
+      .join("\n");
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      return "{}";
+    }
+
+    return entries
+      .map(([key, childValue]) => {
+        const prefix = `${indentation.repeat(level)}${formatYamlKey(key)}:`;
+        if (isYamlScalar(childValue)) {
+          return `${prefix} ${formatYamlScalar(childValue)}`;
+        }
+
+        return `${prefix}\n${stringifyYaml(childValue, level + 1, options)}`;
+      })
+      .join("\n");
+  }
+
+  return `${indentation.repeat(level)}${formatYamlScalar(value)}`;
+}
+
+function stringifyYamlSequenceObject(value, level, options) {
+  const indentation = getIndentString();
+  const entries = Object.entries(value);
+  const childIndent = indentation.repeat(level + 1);
+
+  return entries
+    .map(([key, childValue], index) => {
+      const prefix = index === 0 ? `${indentation.repeat(level)}- ` : childIndent;
+      const keyPrefix = `${prefix}${formatYamlKey(key)}:`;
+      if (isYamlScalar(childValue)) {
+        return `${keyPrefix} ${formatYamlScalar(childValue)}`;
+      }
+
+      return `${keyPrefix}\n${stringifyYaml(childValue, level + 2, options)}`;
+    })
+    .join("\n");
+}
+
+function isPlainYamlObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isYamlScalar(value) {
+  return !value || typeof value !== "object";
+}
+
+function formatYamlKey(key) {
+  return /^[A-Za-z_][\w.-]*$/.test(key) ? key : JSON.stringify(key);
+}
+
+function formatYamlScalar(value) {
+  if (value === null) {
+    return "null";
+  }
+
+  if (typeof value === "string") {
+    return shouldQuoteYamlString(value) ? JSON.stringify(value) : value;
+  }
+
+  return String(value);
+}
+
+function shouldQuoteYamlString(value) {
+  return (
+    !value ||
+    /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
+    /\s$|^\s/.test(value) ||
+    /:\s/.test(value) ||
+    /\s#/.test(value) ||
+    /^(?:true|false|null|~)$/i.test(value) ||
+    /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(value)
+  );
+}
+
 function getIndent() {
   return indentSelect.value === "tab" ? "\t" : Number(indentSelect.value);
 }
@@ -360,6 +727,10 @@ function detectFormat(value) {
     return "xml";
   }
 
+  if (looksLikeYaml(input)) {
+    return "yaml";
+  }
+
   return null;
 }
 
@@ -373,6 +744,10 @@ function detectFormatFromFileName(fileName) {
     return "xml";
   }
 
+  if (extension === "yaml" || extension === "yml") {
+    return "yaml";
+  }
+
   return null;
 }
 
@@ -384,6 +759,15 @@ function looksLikeJson(input) {
 
 function looksLikeXml(input) {
   return /^<\?xml[\s>]/i.test(input) || /^<[A-Za-z_][\w:.-]*(\s|>|\/>)/.test(input);
+}
+
+function looksLikeYaml(input) {
+  try {
+    parseYaml(input);
+    return /^[A-Za-z_"][^{}[\]]*:\s*/m.test(input) || /^\s*-\s+\S/m.test(input);
+  } catch {
+    return false;
+  }
 }
 
 function updateFormatControls() {

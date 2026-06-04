@@ -1,10 +1,10 @@
 # Format Lizard
 
-A small JavaScript formatter app, starting with JSON and XML.
+A small JavaScript formatter app for JSON, XML, and YAML.
 
-Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json` or `.xml` file.
+Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json`, `.xml`, `.yaml`, or `.yml` file.
 Then format or minify it into the right editor.
-Use `Save` to download the formatted output as a `.json` or `.xml` file.
+Use `Save` to download the formatted output as a `.json`, `.xml`, or `.yaml` file.
 
 For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).
 
@@ -12,18 +12,21 @@ For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.m
 
 - JSON
 - XML
+- YAML
 
 JSON tools:
 
-- Auto-detect JSON/XML from pasted content.
+- Auto-detect JSON/XML/YAML from pasted content.
 - View formatted JSON as an expandable tree.
 - Sort object keys before formatting or minifying JSON.
 - Unescape JSON strings, such as `"{\"name\":\"Ada\"}"`, into editable JSON.
 - Convert JSON to XML.
 
+YAML support covers common configuration-file shapes: mappings, lists, nested values, strings, booleans, nulls, and numbers.
+
 Good next candidates:
 
-- YAML, for configuration files.
+- CSV, for table-shaped data.
 - HTML, for markup snippets.
 - CSS, for stylesheets.
 - SQL, for database queries.
