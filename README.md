@@ -1,10 +1,10 @@
 # Format Lizard
 
-A small JavaScript formatter app for JSON, XML, and YAML.
+A small JavaScript formatter app for JSON, XML, YAML, and CSS.
 
-Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json`, `.xml`, `.config`, `.yaml`, or `.yml` file.
+Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json`, `.xml`, `.config`, `.yaml`, `.yml`, or `.css` file.
 Then format or minify it into the right editor.
-Use `Save` to download the formatted output as a `.json`, `.xml`, or `.yaml` file.
+Use `Save` to download the formatted output as a `.json`, `.xml`, `.yaml`, or `.css` file.
 
 For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).
 
@@ -13,10 +13,11 @@ For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.m
 - JSON
 - XML
 - YAML
+- CSS
 
 JSON tools:
 
-- Auto-detect JSON/XML/YAML from pasted content.
+- Auto-detect JSON/XML/YAML/CSS from pasted content.
 - View formatted JSON as an expandable tree.
 - Sort object keys before formatting or minifying JSON.
 - Unescape JSON strings, such as `"{\"name\":\"Ada\"}"`, into editable JSON.
@@ -24,11 +25,12 @@ JSON tools:
 
 YAML support covers common configuration-file shapes: mappings, lists, nested values, strings, booleans, nulls, and numbers.
 
+CSS support covers standard stylesheets, including comments, selectors, declarations, `@media`, and `@keyframes`.
+
 Good next candidates:
 
 - CSV, for table-shaped data.
 - HTML, for markup snippets.
-- CSS, for stylesheets.
 - SQL, for database queries.
 - Markdown, for prose cleanup.
 

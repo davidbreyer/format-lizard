@@ -24,7 +24,7 @@ const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1912";
+const appRelease = "20260604-1949";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -38,31 +38,36 @@ const formatSamples = {
     }
   }),
   xml: '<project name="Format Lizard"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>',
-  yaml: 'project: Format Lizard\nformat: yaml\nactive: true\nchecks:\n  - parse\n  - format\n  - copy\nnested:\n  indent: 2\n  futureFormats:\n    - json\n    - xml\n    - toml'
+  yaml: 'project: Format Lizard\nformat: yaml\nactive: true\nchecks:\n  - parse\n  - format\n  - copy\nnested:\n  indent: 2\n  futureFormats:\n    - json\n    - xml\n    - toml',
+  css: '/* Format Lizard buttons */\n.button{color:white;background:#5f7a38;border-radius:8px}.button:hover{background:#35471e}@media (max-width: 640px){.button{width:100%}}'
 };
 
 const formatLabels = {
   json: "JSON",
   xml: "XML",
-  yaml: "YAML"
+  yaml: "YAML",
+  css: "CSS"
 };
 
 const fileExtensions = {
   json: "json",
   xml: "xml",
-  yaml: "yaml"
+  yaml: "yaml",
+  css: "css"
 };
 
 const mimeTypes = {
   json: "application/json",
   xml: "application/xml",
-  yaml: "application/yaml"
+  yaml: "application/yaml",
+  css: "text/css"
 };
 
 const placeholders = {
   json: '{"name":"Ada","tools":["logic","tea"],"ready":true}',
   xml: '<project name="Ada"><tool>logic</tool><ready>true</ready></project>',
-  yaml: 'name: Ada\ntools:\n  - logic\n  - tea\nready: true'
+  yaml: 'name: Ada\ntools:\n  - logic\n  - tea\nready: true',
+  css: '.button{color:white;background:#5f7a38}'
 };
 
 const formatters = {
@@ -77,6 +82,10 @@ const formatters = {
   yaml: {
     format: formatYaml,
     minify: minifyYaml
+  },
+  css: {
+    format: formatCss,
+    minify: minifyCss
   }
 };
 
@@ -729,6 +738,234 @@ function shouldQuoteYamlString(value) {
   );
 }
 
+function formatCss(input) {
+  const tokens = tokenizeCss(input);
+  validateCssTokens(tokens);
+  const indentation = getIndentString();
+  const lines = [];
+  let level = 0;
+
+  tokens.forEach((token, index) => {
+    const previous = tokens[index - 1];
+    const next = tokens[index + 1];
+
+    if (token.type === "comment") {
+      pushCssLine(lines, level, token.value.trim());
+      return;
+    }
+
+    if (token.value === "{") {
+      appendCssText(lines, " {", level);
+      level += 1;
+      return;
+    }
+
+    if (token.value === "}") {
+      level = Math.max(0, level - 1);
+      if (previous && previous.value !== "{" && previous.value !== ";" && previous.value !== "}") {
+        appendCssText(lines, ";", level + 1);
+      }
+      pushCssLine(lines, level, "}");
+      if (next && next.value !== "}") {
+        lines.push("");
+      }
+      return;
+    }
+
+    if (token.value === ";") {
+      appendCssText(lines, ";", level);
+      return;
+    }
+
+    if (token.value === ":") {
+      appendCssText(lines, isCssSelectorColon(tokens, index) ? ":" : ": ", level);
+      return;
+    }
+
+    if (token.value === ",") {
+      appendCssText(lines, ", ", level);
+      return;
+    }
+
+    const text = normalizeCssText(token.value);
+    if (previous && (previous.value === "{" || previous.value === ";" || previous.type === "comment")) {
+      pushCssLine(lines, level, text);
+    } else {
+      appendCssText(lines, text, level);
+    }
+  });
+
+  return lines
+    .filter((line, index, allLines) => line || (allLines[index - 1] && allLines[index + 1]))
+    .join("\n")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+}
+
+function minifyCss(input) {
+  const tokens = tokenizeCss(input);
+  validateCssTokens(tokens);
+  let output = "";
+
+  tokens.forEach((token) => {
+    if (token.type === "comment") {
+      if (token.value.startsWith("/*!")) {
+        output += token.value;
+      }
+      return;
+    }
+
+    if (token.type === "punctuation") {
+      output = output.trimEnd();
+      output += token.value;
+      return;
+    }
+
+    const value = normalizeCssText(token.value);
+    const previous = output[output.length - 1] || "";
+    if (previous && needsCssSeparator(previous, value[0])) {
+      output += " ";
+    }
+    output += value;
+  });
+
+  return output.trim();
+}
+
+function tokenizeCss(input) {
+  const tokens = [];
+  let buffer = "";
+  let quote = null;
+  let parenDepth = 0;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const next = input[index + 1];
+
+    if (quote) {
+      buffer += char;
+      if (char === "\\" && next) {
+        buffer += next;
+        index += 1;
+        continue;
+      }
+      if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === "\"" || char === "'") {
+      quote = char;
+      buffer += char;
+      continue;
+    }
+
+    if (char === "/" && next === "*") {
+      flushCssBuffer(tokens, buffer);
+      buffer = "";
+      const end = input.indexOf("*/", index + 2);
+      if (end === -1) {
+        throw new Error(`Unclosed CSS comment at line ${getLineAndColumn(input, index).line}`);
+      }
+      tokens.push({ type: "comment", value: input.slice(index, end + 2) });
+      index = end + 1;
+      continue;
+    }
+
+    if (char === "(") {
+      parenDepth += 1;
+      buffer += char;
+      continue;
+    }
+
+    if (char === ")") {
+      parenDepth = Math.max(0, parenDepth - 1);
+      buffer += char;
+      continue;
+    }
+
+    if (!parenDepth && "{}:;,".includes(char)) {
+      flushCssBuffer(tokens, buffer);
+      buffer = "";
+      tokens.push({ type: "punctuation", value: char });
+      continue;
+    }
+
+    buffer += char;
+  }
+
+  if (quote) {
+    throw new Error("Unclosed CSS string");
+  }
+
+  flushCssBuffer(tokens, buffer);
+  return tokens;
+}
+
+function flushCssBuffer(tokens, buffer) {
+  const value = normalizeCssText(buffer);
+  if (value) {
+    tokens.push({ type: "text", value });
+  }
+}
+
+function validateCssTokens(tokens) {
+  let depth = 0;
+
+  tokens.forEach((token) => {
+    if (token.value === "{") {
+      depth += 1;
+    }
+
+    if (token.value === "}") {
+      depth -= 1;
+      if (depth < 0) {
+        throw new Error("Unexpected CSS closing brace");
+      }
+    }
+  });
+
+  if (depth > 0) {
+    throw new Error("Unclosed CSS block");
+  }
+}
+
+function isCssSelectorColon(tokens, index) {
+  for (let cursor = index + 1; cursor < tokens.length; cursor += 1) {
+    const token = tokens[cursor];
+    if (token.value === "{") {
+      return true;
+    }
+    if (token.value === ";" || token.value === "}") {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function pushCssLine(lines, level, text) {
+  lines.push(`${getIndentString().repeat(level)}${text}`);
+}
+
+function appendCssText(lines, text, level) {
+  if (!lines.length || lines[lines.length - 1] === "") {
+    pushCssLine(lines, level, text.trimStart());
+    return;
+  }
+
+  lines[lines.length - 1] += text;
+}
+
+function normalizeCssText(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function needsCssSeparator(previous, next) {
+  return /[\w%)#.-]/.test(previous) && /[\w.#-]/.test(next);
+}
+
 function getIndent() {
   return indentSelect.value === "tab" ? "\t" : Number(indentSelect.value);
 }
@@ -789,6 +1026,10 @@ function detectFormat(value) {
     return "xml";
   }
 
+  if (looksLikeCss(input)) {
+    return "css";
+  }
+
   if (looksLikeYaml(input)) {
     return "yaml";
   }
@@ -810,6 +1051,10 @@ function detectFormatFromFileName(fileName) {
     return "yaml";
   }
 
+  if (extension === "css") {
+    return "css";
+  }
+
   return null;
 }
 
@@ -821,6 +1066,19 @@ function looksLikeJson(input) {
 
 function looksLikeXml(input) {
   return /^<\?xml[\s>]/i.test(input) || /^<[A-Za-z_][\w:.-]*(\s|>|\/>)/.test(input);
+}
+
+function looksLikeCss(input) {
+  if (!/[{}]/.test(input) || !/[.#@:[\]\w-][^{]*\{[^}]*[:;]/.test(input)) {
+    return false;
+  }
+
+  try {
+    validateCssTokens(tokenizeCss(input));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function looksLikeYaml(input) {
