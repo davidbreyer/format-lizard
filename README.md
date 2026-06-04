@@ -1,4 +1,4 @@
-# Lizard Formatter
+# Format Lizard
 
 A small JavaScript formatter app, starting with JSON and XML.
 
@@ -32,7 +32,7 @@ Good next candidates:
 The site publishes from the remote `gh-pages` branch:
 
 ```text
-https://davidbreyer.github.io/lizard-formatter/
+https://davidbreyer.github.io/format-lizard/
 ```
 
 Normal deployment flow:

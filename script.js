@@ -16,11 +16,11 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-0641";
+const appRelease = "20260604-1757";
 
 const formatSamples = {
   json: JSON.stringify({
-    project: "Lizard Formatter",
+    project: "Format Lizard",
     format: "json",
     active: true,
     checks: ["parse", "format", "copy"],
@@ -29,7 +29,7 @@ const formatSamples = {
       futureFormats: ["xml", "yaml", "toml"]
     }
   }),
-  xml: '<project name="Lizard Formatter"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>'
+  xml: '<project name="Format Lizard"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>'
 };
 
 const formatLabels = {
@@ -476,7 +476,7 @@ function saveOutput() {
   const downloadUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = downloadUrl;
-  link.download = `lizard-formatter-${appRelease}.${fileExtensions[outputFormat] || "txt"}`;
+  link.download = `format-lizard-${appRelease}.${fileExtensions[outputFormat] || "txt"}`;
   document.body.appendChild(link);
   link.click();
   link.remove();

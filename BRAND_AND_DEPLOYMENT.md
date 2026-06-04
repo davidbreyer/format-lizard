@@ -1,6 +1,6 @@
 # Brand and Deployment Notes
 
-This file documents the Lizard Formatter logo, color palette, release/version stamp, and GitHub Pages publishing flow.
+This file documents the Format Lizard logo, color palette, release/version stamp, and GitHub Pages publishing flow.
 
 ## Logo
 
@@ -127,7 +127,7 @@ This project publishes like Luftblasen.
 Repository:
 
 ```text
-https://github.com/davidbreyer/lizard-formatter.git
+https://github.com/davidbreyer/format-lizard.git
 ```
 
 Branches:
@@ -138,13 +138,13 @@ Branches:
 The live site is served from `gh-pages`:
 
 ```text
-https://davidbreyer.github.io/lizard-formatter/
+https://davidbreyer.github.io/format-lizard/
 ```
 
 Because the user Pages site has a custom domain, GitHub may redirect to:
 
 ```text
-https://www.davidbreyer.com/lizard-formatter/
+https://www.davidbreyer.com/format-lizard/
 ```
 
 Normal deployment flow:

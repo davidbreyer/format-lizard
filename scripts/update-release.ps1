@@ -33,4 +33,4 @@ $indexContent = [regex]::Replace(
 )
 [System.IO.File]::WriteAllText($indexPath, $indexContent, $utf8NoBom)
 
-Write-Host "Updated Lizard Formatter release to $Release"
+Write-Host "Updated Format Lizard release to $Release"
