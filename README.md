@@ -6,13 +6,22 @@ Open `index.html` in a browser, paste compact or messy JSON into the left editor
 
 ## GitHub Pages
 
-The site is ready to run from GitHub Pages at:
+The site publishes from the remote `gh-pages` branch:
 
 ```text
 https://davidbreyer.github.io/lizard-formatter/
 ```
 
-Use the `master` branch and `/ (root)` folder as the Pages source.
+Normal deployment flow:
+
+```powershell
+git add -- ...
+git commit -m "Some change"
+git push origin master
+git push origin master:gh-pages
+```
+
+`master` stores the source/history. `gh-pages` is the branch GitHub Pages serves publicly.
 
 ## Release Stamp
 
