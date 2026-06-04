@@ -16,6 +16,7 @@ For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.m
 JSON tools:
 
 - Auto-detect JSON/XML from pasted content.
+- View formatted JSON as an expandable tree.
 - Sort object keys before formatting or minifying JSON.
 - Unescape JSON strings, such as `"{\"name\":\"Ada\"}"`, into editable JSON.
 - Convert JSON to XML.

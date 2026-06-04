@@ -282,6 +282,41 @@ button:active {
   background: rgba(255, 255, 255, 0.6);
 }
 
+.pane-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.view-tabs {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.view-tab {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.view-tab + .view-tab {
+  border-left: 1px solid var(--line);
+}
+
+.view-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
 .pane-header label {
   font-weight: 900;
 }
@@ -315,6 +350,84 @@ textarea::placeholder {
 
 #formattedOutput {
   background: rgba(128, 162, 77, 0.045);
+}
+
+.hidden {
+  display: none;
+}
+
+.tree-output {
+  min-height: 440px;
+  overflow: auto;
+  padding: 18px;
+  background: rgba(128, 162, 77, 0.045);
+  color: #142018;
+  font-family:
+    "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.tree-node {
+  margin: 1px 0;
+}
+
+.tree-children {
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(128, 162, 77, 0.25);
+}
+
+.tree-toggle {
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-weight: 900;
+}
+
+.tree-toggle:hover {
+  border-color: transparent;
+}
+
+.tree-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.tree-key {
+  color: #425f22;
+  font-weight: 900;
+}
+
+.tree-index,
+.tree-meta {
+  color: var(--muted);
+}
+
+.tree-string {
+  color: #7b3d1d;
+}
+
+.tree-number {
+  color: #1f5f86;
+}
+
+.tree-boolean {
+  color: #7a4a92;
+}
+
+.tree-null {
+  color: #777;
+}
+
+.tree-empty {
+  color: var(--muted);
+  font-style: italic;
 }
 
 .app-footer {
@@ -372,6 +485,10 @@ textarea::placeholder {
   textarea {
     min-height: 300px;
   }
+
+  .tree-output {
+    min-height: 300px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -411,6 +528,16 @@ textarea::placeholder {
   .status-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .pane-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pane-tools {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .app-footer {

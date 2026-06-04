@@ -16,9 +16,12 @@ const status = document.querySelector("#status");
 const stats = document.querySelector("#stats");
 const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
+const textViewButton = document.querySelector("#textViewButton");
+const treeViewButton = document.querySelector("#treeViewButton");
+const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1815";
+const appRelease = "20260604-1827";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -78,6 +81,8 @@ jsonToXmlButton.addEventListener("click", convertJsonToXml);
 copyButton.addEventListener("click", copyOutput);
 saveButton.addEventListener("click", saveOutput);
 clearButton.addEventListener("click", clearEditors);
+textViewButton.addEventListener("click", () => setOutputView("text"));
+treeViewButton.addEventListener("click", () => setOutputView("tree"));
 sourceInput.addEventListener("input", handleInputChange);
 formatSelect.addEventListener("change", handleFormatChange);
 indentSelect.addEventListener("change", () => {
@@ -96,6 +101,7 @@ function formatInput() {
   if (!input) {
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     setStatus("Ready", "idle");
     updateCounts();
     return;
@@ -110,10 +116,12 @@ function formatInput() {
   try {
     formattedOutput.value = selectedFormatter.format(input);
     formattedOutput.dataset.outputFormat = formatSelect.value;
+    updateTreeOutput();
     setStatus(`Formatted ${getFormatLabel()}`, "valid");
   } catch (error) {
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     setStatus(error.message, "error");
   }
 
@@ -133,6 +141,7 @@ async function openSelectedFile() {
     sourceInput.value = content;
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     applyDetectedOrNamedFormat(content, file.name);
     formatInput();
     setStatus(`Opened ${file.name}`, "valid");
@@ -158,6 +167,7 @@ function minifyInput() {
   if (!input) {
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     setStatus("Ready", "idle");
     updateCounts();
     return;
@@ -172,10 +182,12 @@ function minifyInput() {
   try {
     formattedOutput.value = selectedFormatter.minify(input);
     formattedOutput.dataset.outputFormat = formatSelect.value;
+    updateTreeOutput();
     setStatus(`Minified ${getFormatLabel()}`, "valid");
   } catch (error) {
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     setStatus(error.message, "error");
   }
 
@@ -301,6 +313,7 @@ function handleFormatChange() {
     sourceInput.value = formatSamples[selectedFormat] || "";
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     formatInput();
   } else {
     updateCounts();
@@ -323,6 +336,7 @@ function autoDetectFormat(value) {
   formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   formattedOutput.value = "";
   delete formattedOutput.dataset.outputFormat;
+  clearTreeOutput();
   updateFormatControls();
   setStatus(`Detected ${getFormatLabel()}`, "valid");
 }
@@ -396,6 +410,7 @@ function unescapeJsonString() {
     sourceInput.value = parsed;
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     autoDetectFormat(parsed);
     formatInput();
     setStatus("Unescaped JSON string", "valid");
@@ -420,10 +435,12 @@ function convertJsonToXml() {
     const parsed = prepareJsonValue(JSON.parse(input));
     formattedOutput.value = jsonValueToXmlDocument(parsed);
     formattedOutput.dataset.outputFormat = "xml";
+    clearTreeOutput();
     setStatus("Converted JSON to XML", "valid");
   } catch (error) {
     formattedOutput.value = "";
     delete formattedOutput.dataset.outputFormat;
+    clearTreeOutput();
     setStatus(getJsonErrorMessage(error), "error");
   }
 
@@ -546,6 +563,7 @@ function clearEditors() {
   sourceInput.value = "";
   formattedOutput.value = "";
   delete formattedOutput.dataset.outputFormat;
+  clearTreeOutput();
   setStatus("Ready", "idle");
   updateCounts();
   sourceInput.focus();
@@ -562,6 +580,139 @@ function updateCounts() {
 function setStatus(message, type) {
   status.textContent = message;
   status.className = `status-pill status-${type}`;
+}
+
+function setOutputView(view) {
+  const showTree = view === "tree" && !treeViewButton.disabled;
+  formattedOutput.classList.toggle("hidden", showTree);
+  treeOutput.classList.toggle("hidden", !showTree);
+  textViewButton.classList.toggle("active", !showTree);
+  treeViewButton.classList.toggle("active", showTree);
+  textViewButton.setAttribute("aria-pressed", String(!showTree));
+  treeViewButton.setAttribute("aria-pressed", String(showTree));
+}
+
+function updateTreeOutput() {
+  if (getOutputFormat() !== "json" || !formattedOutput.value.trim()) {
+    clearTreeOutput();
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(formattedOutput.value);
+    treeOutput.replaceChildren(renderJsonTree(parsed, "$"));
+    treeViewButton.disabled = false;
+  } catch {
+    clearTreeOutput();
+  }
+}
+
+function clearTreeOutput() {
+  treeOutput.replaceChildren();
+  treeViewButton.disabled = true;
+  setOutputView("text");
+}
+
+function renderJsonTree(value, label) {
+  const node = document.createElement("div");
+  node.className = "tree-node";
+
+  if (isJsonContainer(value)) {
+    const details = document.createElement("details");
+    details.open = true;
+
+    const summary = document.createElement("summary");
+    summary.append(renderJsonContainerLine(value, label));
+    details.append(summary);
+
+    const children = document.createElement("div");
+    children.className = "tree-children";
+    const entries = Array.isArray(value)
+      ? value.map((item, index) => [index, item])
+      : Object.entries(value);
+
+    if (!entries.length) {
+      const empty = document.createElement("div");
+      empty.className = "tree-empty";
+      empty.textContent = Array.isArray(value) ? "empty array" : "empty object";
+      children.append(empty);
+    } else {
+      entries.forEach(([key, childValue]) => {
+        children.append(renderJsonTree(childValue, key));
+      });
+    }
+
+    details.append(children);
+    node.append(details);
+    return node;
+  }
+
+  node.append(renderJsonLeafLine(value, label));
+  return node;
+}
+
+function renderJsonContainerLine(value, label) {
+  const line = document.createElement("span");
+  line.className = "tree-line";
+  line.append(renderJsonLabel(label));
+
+  const meta = document.createElement("span");
+  meta.className = "tree-meta";
+  const count = Array.isArray(value) ? value.length : Object.keys(value).length;
+  meta.textContent = Array.isArray(value)
+    ? `[${count} ${count === 1 ? "item" : "items"}]`
+    : `{${count} ${count === 1 ? "key" : "keys"}}`;
+  line.append(meta);
+  return line;
+}
+
+function renderJsonLeafLine(value, label) {
+  const line = document.createElement("div");
+  line.className = "tree-line";
+  line.append(renderJsonLabel(label));
+
+  const valueNode = document.createElement("span");
+  valueNode.className = `tree-${getJsonType(value)}`;
+  valueNode.textContent = formatJsonLeafValue(value);
+  line.append(valueNode);
+  return line;
+}
+
+function renderJsonLabel(label) {
+  const labelNode = document.createElement("span");
+  labelNode.className = Number.isInteger(Number(label)) && String(Number(label)) === String(label)
+    ? "tree-index"
+    : "tree-key";
+  labelNode.textContent = `${label}:`;
+  return labelNode;
+}
+
+function isJsonContainer(value) {
+  return value !== null && typeof value === "object";
+}
+
+function getJsonType(value) {
+  if (value === null) {
+    return "null";
+  }
+
+  if (Array.isArray(value)) {
+    return "array";
+  }
+
+  return typeof value;
+}
+
+function formatJsonLeafValue(value) {
+  if (typeof value === "string") {
+    return `"${value}"`;
+  }
+
+  if (value === null) {
+    return "null";
+  }
+
+  return String(value);
 }
 
 function getOutputFormat() {
