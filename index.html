@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lizard Formatter</title>
+    <link rel="icon" type="image/png" href="assets/apple-icon.png">
+    <link rel="apple-touch-icon" href="assets/apple-icon.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="top-bar">
+        <div class="brand-lockup">
+          <img src="assets/yelling-lizard-logo.png" alt="" class="brand-logo" width="72" height="72">
+          <div>
+            <p class="eyebrow">Lizard Formatter</p>
+            <h1>JSON workspace</h1>
+          </div>
+        </div>
+        <div class="toolbar" aria-label="Formatter controls">
+          <label class="field-label" for="format">Format</label>
+          <select id="format">
+            <option value="json">JSON</option>
+          </select>
+
+          <label class="field-label" for="indent">Indent</label>
+          <select id="indent">
+            <option value="2">2 spaces</option>
+            <option value="4">4 spaces</option>
+            <option value="tab">Tab</option>
+          </select>
+
+          <button id="formatButton" type="button" class="primary-button">Format</button>
+          <button id="minifyButton" type="button">Minify</button>
+          <button id="copyButton" type="button">Copy</button>
+          <button id="clearButton" type="button" class="ghost-button">Clear</button>
+        </div>
+      </header>
+
+      <section class="status-row" aria-live="polite">
+        <div id="status" class="status-pill status-idle">Ready</div>
+        <div id="stats" class="stats">0 chars</div>
+      </section>
+
+      <section class="editor-grid" aria-label="JSON formatter editors">
+        <div class="editor-pane">
+          <div class="pane-header">
+            <label for="sourceInput">Input</label>
+            <span id="inputCount">0 chars</span>
+          </div>
+          <textarea
+            id="sourceInput"
+            spellcheck="false"
+            placeholder='{"name":"Ada","tools":["logic","tea"],"ready":true}'
+            aria-label="Unformatted JSON input"
+          ></textarea>
+        </div>
+
+        <div class="editor-pane">
+          <div class="pane-header">
+            <label for="formattedOutput">Output</label>
+            <span id="outputCount">0 chars</span>
+          </div>
+          <textarea
+            id="formattedOutput"
+            spellcheck="false"
+            readonly
+            placeholder="Formatted JSON will appear here"
+            aria-label="Formatted JSON output"
+          ></textarea>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
