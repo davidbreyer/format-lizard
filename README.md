@@ -1,10 +1,23 @@
 # Lizard Formatter
 
-A small JavaScript formatter app, starting with JSON.
+A small JavaScript formatter app, starting with JSON and XML.
 
-Open `index.html` in a browser, paste compact or messy JSON into the left editor, then format or minify it into the right editor.
+Open `index.html` in a browser, paste compact or messy data into the left editor, then format or minify it into the right editor.
 
 For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).
+
+## Supported Formats
+
+- JSON
+- XML
+
+Good next candidates:
+
+- YAML, for configuration files.
+- HTML, for markup snippets.
+- CSS, for stylesheets.
+- SQL, for database queries.
+- Markdown, for prose cleanup.
 
 ## GitHub Pages
 

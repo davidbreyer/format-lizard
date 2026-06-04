@@ -12,40 +12,60 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260603-2057";
+const appRelease = "20260603-2110";
 
-const sampleJson = {
-  project: "Lizard Formatter",
-  format: "json",
-  active: true,
-  checks: ["parse", "format", "copy"],
-  nested: {
-    indent: 2,
-    futureFormats: ["yaml", "xml", "toml"]
+const formatSamples = {
+  json: JSON.stringify({
+    project: "Lizard Formatter",
+    format: "json",
+    active: true,
+    checks: ["parse", "format", "copy"],
+    nested: {
+      indent: 2,
+      futureFormats: ["xml", "yaml", "toml"]
+    }
+  }),
+  xml: '<project name="Lizard Formatter"><format>xml</format><checks><check>parse</check><check>format</check><check>copy</check></checks></project>'
+};
+
+const formatLabels = {
+  json: "JSON",
+  xml: "XML"
+};
+
+const placeholders = {
+  json: '{"name":"Ada","tools":["logic","tea"],"ready":true}',
+  xml: '<project name="Ada"><tool>logic</tool><ready>true</ready></project>'
+};
+
+const formatters = {
+  json: {
+    format: formatJson,
+    minify: minifyJson
+  },
+  xml: {
+    format: formatXml,
+    minify: minifyXml
   }
 };
 
-sourceInput.value = JSON.stringify(sampleJson);
+sourceInput.value = formatSamples.json;
 renderReleaseStamp();
-formatJson();
+formatInput();
 
-formatButton.addEventListener("click", formatJson);
-minifyButton.addEventListener("click", () => formatJson({ minify: true }));
+formatButton.addEventListener("click", formatInput);
+minifyButton.addEventListener("click", minifyInput);
 copyButton.addEventListener("click", copyOutput);
 clearButton.addEventListener("click", clearEditors);
 sourceInput.addEventListener("input", updateCounts);
+formatSelect.addEventListener("change", handleFormatChange);
 indentSelect.addEventListener("change", () => {
   if (formattedOutput.value.trim()) {
-    formatJson();
+    formatInput();
   }
 });
 
-function formatJson(options = {}) {
-  if (formatSelect.value !== "json") {
-    setStatus("Only JSON is available right now.", "error");
-    return;
-  }
-
+function formatInput() {
   const input = sourceInput.value.trim();
   if (!input) {
     formattedOutput.value = "";
@@ -54,21 +74,141 @@ function formatJson(options = {}) {
     return;
   }
 
+  const selectedFormatter = formatters[formatSelect.value];
+  if (!selectedFormatter) {
+    setStatus("That format is not available right now.", "error");
+    return;
+  }
+
   try {
-    const parsed = JSON.parse(input);
-    const spacing = options.minify ? 0 : getIndent();
-    formattedOutput.value = JSON.stringify(parsed, null, spacing);
-    setStatus(options.minify ? "Minified JSON" : "Formatted JSON", "valid");
+    formattedOutput.value = selectedFormatter.format(input);
+    setStatus(`Formatted ${getFormatLabel()}`, "valid");
   } catch (error) {
     formattedOutput.value = "";
-    setStatus(getJsonErrorMessage(error), "error");
+    setStatus(error.message, "error");
   }
 
   updateCounts();
 }
 
+function minifyInput() {
+  const input = sourceInput.value.trim();
+  if (!input) {
+    formattedOutput.value = "";
+    setStatus("Ready", "idle");
+    updateCounts();
+    return;
+  }
+
+  const selectedFormatter = formatters[formatSelect.value];
+  if (!selectedFormatter) {
+    setStatus("That format is not available right now.", "error");
+    return;
+  }
+
+  try {
+    formattedOutput.value = selectedFormatter.minify(input);
+    setStatus(`Minified ${getFormatLabel()}`, "valid");
+  } catch (error) {
+    formattedOutput.value = "";
+    setStatus(error.message, "error");
+  }
+
+  updateCounts();
+}
+
+function formatJson(input) {
+  try {
+    const parsed = JSON.parse(input);
+    return JSON.stringify(parsed, null, getIndent());
+  } catch (error) {
+    throw new Error(getJsonErrorMessage(error));
+  }
+}
+
+function minifyJson(input) {
+  try {
+    return JSON.stringify(JSON.parse(input));
+  } catch (error) {
+    throw new Error(getJsonErrorMessage(error));
+  }
+}
+
+function formatXml(input) {
+  const document = parseXml(input);
+  const serialized = new XMLSerializer().serializeToString(document);
+  return prettyPrintXml(serialized, getIndentString());
+}
+
+function minifyXml(input) {
+  const document = parseXml(input);
+  return new XMLSerializer()
+    .serializeToString(document)
+    .replace(/>\s+</g, "><")
+    .trim();
+}
+
+function parseXml(input) {
+  const document = new DOMParser().parseFromString(input, "application/xml");
+  const parserError = document.querySelector("parsererror");
+  if (parserError) {
+    throw new Error(getXmlErrorMessage(parserError));
+  }
+  return document;
+}
+
+function prettyPrintXml(xml, indentation) {
+  const tokens = xml.replace(/>\s*</g, "><").split(/(?=<)|(?<=>)/g).filter(Boolean);
+  let level = 0;
+  const lines = [];
+
+  tokens.forEach((token) => {
+    if (!token.trim()) {
+      return;
+    }
+
+    if (token.startsWith("</")) {
+      level = Math.max(level - 1, 0);
+    }
+
+    lines.push(`${indentation.repeat(level)}${token.trim()}`);
+
+    if (isOpeningXmlTag(token)) {
+      level += 1;
+    }
+  });
+
+  return lines.join("\n");
+}
+
+function isOpeningXmlTag(token) {
+  return token.startsWith("<")
+    && !token.startsWith("</")
+    && !token.startsWith("<?")
+    && !token.startsWith("<!")
+    && !token.endsWith("/>");
+}
+
 function getIndent() {
   return indentSelect.value === "tab" ? "\t" : Number(indentSelect.value);
+}
+
+function getIndentString() {
+  return indentSelect.value === "tab" ? "\t" : " ".repeat(Number(indentSelect.value));
+}
+
+function handleFormatChange() {
+  const selectedFormat = formatSelect.value;
+  sourceInput.placeholder = placeholders[selectedFormat] || "";
+  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
+
+  if (!sourceInput.value.trim() || formattedOutput.value.trim()) {
+    sourceInput.value = formatSamples[selectedFormat] || "";
+    formattedOutput.value = "";
+    formatInput();
+  } else {
+    updateCounts();
+  }
 }
 
 async function copyOutput() {
@@ -117,6 +257,19 @@ function getJsonErrorMessage(error) {
   const position = Number(match[1]);
   const location = getLineAndColumn(sourceInput.value, position);
   return `Invalid JSON at line ${location.line}, column ${location.column}`;
+}
+
+function getXmlErrorMessage(parserError) {
+  const text = parserError.textContent.replace(/\s+/g, " ").trim();
+  const match = text.match(/line\s+(\d+).*column\s+(\d+)/i);
+  if (match) {
+    return `Invalid XML at line ${match[1]}, column ${match[2]}`;
+  }
+  return "Invalid XML";
+}
+
+function getFormatLabel() {
+  return formatLabels[formatSelect.value] || formatSelect.value.toUpperCase();
 }
 
 function getLineAndColumn(text, position) {
