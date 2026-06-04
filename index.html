@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Format Lizard</title>
-    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260604-1834">
-    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260604-1834">
-    <link rel="stylesheet" href="styles.css?v=20260604-1834">
+    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260604-1842">
+    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260604-1842">
+    <link rel="stylesheet" href="styles.css?v=20260604-1842">
   </head>
   <body>
     <main class="app-shell">
       <header class="top-bar">
         <div class="brand-lockup">
-          <img src="assets/yelling-lizard-logo.png?v=20260604-1834" alt="" class="brand-logo" width="72" height="72">
+          <img src="assets/yelling-lizard-logo.png?v=20260604-1842" alt="" class="brand-logo" width="72" height="72">
           <div>
             <p class="eyebrow">JSON + XML formatter</p>
             <h1>Format Lizard</h1>
@@ -84,13 +84,17 @@
           <div class="pane-header">
             <label for="formattedOutput">Output</label>
             <div class="pane-tools">
+              <div id="treeActions" class="tree-actions is-hidden" aria-label="Tree controls" aria-hidden="true">
+                <button id="expandTreeButton" class="icon-button" type="button" aria-label="Expand all tree nodes" title="Expand all" disabled>
+                  <span aria-hidden="true">+</span>
+                </button>
+                <button id="collapseTreeButton" class="icon-button" type="button" aria-label="Collapse all tree nodes" title="Collapse all" disabled>
+                  <span aria-hidden="true">-</span>
+                </button>
+              </div>
               <div class="view-tabs" aria-label="Output view">
                 <button id="textViewButton" class="view-tab active" type="button" aria-pressed="true">Text</button>
                 <button id="treeViewButton" class="view-tab" type="button" aria-pressed="false" disabled>Tree</button>
-              </div>
-              <div id="treeActions" class="tree-actions hidden" aria-label="Tree controls">
-                <button id="expandTreeButton" type="button">Expand all</button>
-                <button id="collapseTreeButton" type="button">Collapse all</button>
               </div>
               <span id="outputCount">0 chars</span>
             </div>
@@ -111,11 +115,11 @@
         <span>Ready for tidy data.</span>
         <span>
           <a href="https://github.com/davidbreyer/format-lizard" target="_blank" rel="noreferrer">GitHub</a>
-          <span id="releaseStamp" data-version>Version: 20260604-1834</span>
+          <span id="releaseStamp" data-version>Version: 20260604-1842</span>
         </span>
       </footer>
     </main>
 
-    <script src="script.js?v=20260604-1834"></script>
+    <script src="script.js?v=20260604-1842"></script>
   </body>
 </html>

@@ -24,7 +24,7 @@ const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1834";
+const appRelease = "20260604-1842";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -591,7 +591,7 @@ function setOutputView(view) {
   const showTree = view === "tree" && !treeViewButton.disabled;
   formattedOutput.classList.toggle("hidden", showTree);
   treeOutput.classList.toggle("hidden", !showTree);
-  treeActions.classList.toggle("hidden", !showTree);
+  setTreeActionsVisible(showTree);
   textViewButton.classList.toggle("active", !showTree);
   treeViewButton.classList.toggle("active", showTree);
   textViewButton.setAttribute("aria-pressed", String(!showTree));
@@ -617,6 +617,13 @@ function clearTreeOutput() {
   treeOutput.replaceChildren();
   treeViewButton.disabled = true;
   setOutputView("text");
+}
+
+function setTreeActionsVisible(isVisible) {
+  treeActions.classList.toggle("is-hidden", !isVisible);
+  treeActions.setAttribute("aria-hidden", String(!isVisible));
+  expandTreeButton.disabled = !isVisible;
+  collapseTreeButton.disabled = !isVisible;
 }
 
 function setTreeExpanded(isExpanded) {

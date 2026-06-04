@@ -320,13 +320,31 @@ button:active {
 .tree-actions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  min-width: 68px;
+  transition: opacity 160ms ease;
 }
 
-.tree-actions button {
+.tree-actions.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tree-actions .icon-button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
   min-height: 30px;
-  padding: 0 9px;
+  padding: 0;
   font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tree-actions .icon-button span {
+  display: block;
+  transform: translateY(-1px);
 }
 
 .pane-header label {
