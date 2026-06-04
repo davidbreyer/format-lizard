@@ -16,7 +16,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-0633";
+const appRelease = "20260604-0641";
 
 const formatSamples = {
   json: JSON.stringify({
