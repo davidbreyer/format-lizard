@@ -18,7 +18,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1807";
+const appRelease = "20260604-1815";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -222,8 +222,7 @@ function sortJsonKeys(value) {
 
 function formatXml(input) {
   const document = parseXml(input);
-  const serialized = new XMLSerializer().serializeToString(document);
-  return prettyPrintXml(serialized, getIndentString());
+  return formatXmlNode(document.documentElement, 0);
 }
 
 function minifyXml(input) {
@@ -243,36 +242,45 @@ function parseXml(input) {
   return document;
 }
 
-function prettyPrintXml(xml, indentation) {
-  const tokens = xml.replace(/>\s*</g, "><").split(/(?=<)|(?<=>)/g).filter(Boolean);
-  let level = 0;
-  const lines = [];
+function formatXmlNode(node, level) {
+  const indentation = getIndentString();
+  const prefix = indentation.repeat(level);
+  const attributes = formatXmlAttributes(node);
+  const childElements = Array.from(node.children);
+  const text = getOwnXmlText(node);
 
-  tokens.forEach((token) => {
-    if (!token.trim()) {
-      return;
-    }
+  if (!childElements.length) {
+    return text
+      ? `${prefix}<${node.nodeName}${attributes}>${escapeXmlText(text)}</${node.nodeName}>`
+      : `${prefix}<${node.nodeName}${attributes}></${node.nodeName}>`;
+  }
 
-    if (token.startsWith("</")) {
-      level = Math.max(level - 1, 0);
-    }
+  const lines = [`${prefix}<${node.nodeName}${attributes}>`];
 
-    lines.push(`${indentation.repeat(level)}${token.trim()}`);
+  if (text) {
+    lines.push(`${indentation.repeat(level + 1)}${escapeXmlText(text)}`);
+  }
 
-    if (isOpeningXmlTag(token)) {
-      level += 1;
-    }
+  childElements.forEach((child) => {
+    lines.push(formatXmlNode(child, level + 1));
   });
 
+  lines.push(`${prefix}</${node.nodeName}>`);
   return lines.join("\n");
 }
 
-function isOpeningXmlTag(token) {
-  return token.startsWith("<")
-    && !token.startsWith("</")
-    && !token.startsWith("<?")
-    && !token.startsWith("<!")
-    && !token.endsWith("/>");
+function formatXmlAttributes(node) {
+  return Array.from(node.attributes)
+    .map((attribute) => ` ${attribute.name}="${escapeXmlText(attribute.value)}"`)
+    .join("");
+}
+
+function getOwnXmlText(node) {
+  return Array.from(node.childNodes)
+    .filter((child) => child.nodeType === Node.TEXT_NODE)
+    .map((child) => child.textContent.trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 function getIndent() {
