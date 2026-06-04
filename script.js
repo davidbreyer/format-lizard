@@ -8,6 +8,7 @@ const minifyButton = document.querySelector("#minifyButton");
 const unescapeButton = document.querySelector("#unescapeButton");
 const jsonToXmlButton = document.querySelector("#jsonToXmlButton");
 const copyButton = document.querySelector("#copyButton");
+const saveButton = document.querySelector("#saveButton");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
 const stats = document.querySelector("#stats");
@@ -15,7 +16,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260603-2234";
+const appRelease = "20260603-2245";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -34,6 +35,16 @@ const formatSamples = {
 const formatLabels = {
   json: "JSON",
   xml: "XML"
+};
+
+const fileExtensions = {
+  json: "json",
+  xml: "xml"
+};
+
+const mimeTypes = {
+  json: "application/json",
+  xml: "application/xml"
 };
 
 const placeholders = {
@@ -61,6 +72,7 @@ minifyButton.addEventListener("click", minifyInput);
 unescapeButton.addEventListener("click", unescapeJsonString);
 jsonToXmlButton.addEventListener("click", convertJsonToXml);
 copyButton.addEventListener("click", copyOutput);
+saveButton.addEventListener("click", saveOutput);
 clearButton.addEventListener("click", clearEditors);
 sourceInput.addEventListener("input", handleInputChange);
 formatSelect.addEventListener("change", handleFormatChange);
@@ -79,6 +91,7 @@ function formatInput() {
   const input = sourceInput.value.trim();
   if (!input) {
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     setStatus("Ready", "idle");
     updateCounts();
     return;
@@ -92,9 +105,11 @@ function formatInput() {
 
   try {
     formattedOutput.value = selectedFormatter.format(input);
+    formattedOutput.dataset.outputFormat = formatSelect.value;
     setStatus(`Formatted ${getFormatLabel()}`, "valid");
   } catch (error) {
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     setStatus(error.message, "error");
   }
 
@@ -105,6 +120,7 @@ function minifyInput() {
   const input = sourceInput.value.trim();
   if (!input) {
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     setStatus("Ready", "idle");
     updateCounts();
     return;
@@ -118,9 +134,11 @@ function minifyInput() {
 
   try {
     formattedOutput.value = selectedFormatter.minify(input);
+    formattedOutput.dataset.outputFormat = formatSelect.value;
     setStatus(`Minified ${getFormatLabel()}`, "valid");
   } catch (error) {
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     setStatus(error.message, "error");
   }
 
@@ -237,6 +255,7 @@ function handleFormatChange() {
   if (!sourceInput.value.trim() || formattedOutput.value.trim()) {
     sourceInput.value = formatSamples[selectedFormat] || "";
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     formatInput();
   } else {
     updateCounts();
@@ -258,6 +277,7 @@ function autoDetectFormat(value) {
   sourceInput.placeholder = placeholders[detectedFormat] || "";
   formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   formattedOutput.value = "";
+  delete formattedOutput.dataset.outputFormat;
   updateFormatControls();
   setStatus(`Detected ${getFormatLabel()}`, "valid");
 }
@@ -317,6 +337,7 @@ function unescapeJsonString() {
 
     sourceInput.value = parsed;
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     autoDetectFormat(parsed);
     formatInput();
     setStatus("Unescaped JSON string", "valid");
@@ -340,9 +361,11 @@ function convertJsonToXml() {
   try {
     const parsed = prepareJsonValue(JSON.parse(input));
     formattedOutput.value = jsonValueToXmlDocument(parsed);
+    formattedOutput.dataset.outputFormat = "xml";
     setStatus("Converted JSON to XML", "valid");
   } catch (error) {
     formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
     setStatus(getJsonErrorMessage(error), "error");
   }
 
@@ -440,9 +463,31 @@ async function copyOutput() {
   }
 }
 
+function saveOutput() {
+  if (!formattedOutput.value) {
+    setStatus("Nothing to save", "error");
+    return;
+  }
+
+  const outputFormat = getOutputFormat();
+  const blob = new Blob([formattedOutput.value], {
+    type: `${mimeTypes[outputFormat] || "text/plain"};charset=utf-8`
+  });
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = `lizard-formatter-${appRelease}.${fileExtensions[outputFormat] || "txt"}`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(downloadUrl);
+  setStatus("Saved output file", "valid");
+}
+
 function clearEditors() {
   sourceInput.value = "";
   formattedOutput.value = "";
+  delete formattedOutput.dataset.outputFormat;
   setStatus("Ready", "idle");
   updateCounts();
   sourceInput.focus();
@@ -459,6 +504,10 @@ function updateCounts() {
 function setStatus(message, type) {
   status.textContent = message;
   status.className = `status-pill status-${type}`;
+}
+
+function getOutputFormat() {
+  return formattedOutput.dataset.outputFormat || formatSelect.value;
 }
 
 function getJsonErrorMessage(error) {
