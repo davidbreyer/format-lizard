@@ -2,8 +2,10 @@ const sourceInput = document.querySelector("#sourceInput");
 const formattedOutput = document.querySelector("#formattedOutput");
 const formatSelect = document.querySelector("#format");
 const indentSelect = document.querySelector("#indent");
+const sortKeys = document.querySelector("#sortKeys");
 const formatButton = document.querySelector("#formatButton");
 const minifyButton = document.querySelector("#minifyButton");
+const unescapeButton = document.querySelector("#unescapeButton");
 const copyButton = document.querySelector("#copyButton");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
@@ -12,7 +14,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260603-2110";
+const appRelease = "20260603-2128";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -55,12 +57,18 @@ formatInput();
 
 formatButton.addEventListener("click", formatInput);
 minifyButton.addEventListener("click", minifyInput);
+unescapeButton.addEventListener("click", unescapeJsonString);
 copyButton.addEventListener("click", copyOutput);
 clearButton.addEventListener("click", clearEditors);
-sourceInput.addEventListener("input", updateCounts);
+sourceInput.addEventListener("input", handleInputChange);
 formatSelect.addEventListener("change", handleFormatChange);
 indentSelect.addEventListener("change", () => {
   if (formattedOutput.value.trim()) {
+    formatInput();
+  }
+});
+sortKeys.addEventListener("change", () => {
+  if (formatSelect.value === "json" && formattedOutput.value.trim()) {
     formatInput();
   }
 });
@@ -119,7 +127,7 @@ function minifyInput() {
 
 function formatJson(input) {
   try {
-    const parsed = JSON.parse(input);
+    const parsed = prepareJsonValue(JSON.parse(input));
     return JSON.stringify(parsed, null, getIndent());
   } catch (error) {
     throw new Error(getJsonErrorMessage(error));
@@ -128,10 +136,31 @@ function formatJson(input) {
 
 function minifyJson(input) {
   try {
-    return JSON.stringify(JSON.parse(input));
+    return JSON.stringify(prepareJsonValue(JSON.parse(input)));
   } catch (error) {
     throw new Error(getJsonErrorMessage(error));
   }
+}
+
+function prepareJsonValue(value) {
+  return sortKeys.checked ? sortJsonKeys(value) : value;
+}
+
+function sortJsonKeys(value) {
+  if (Array.isArray(value)) {
+    return value.map(sortJsonKeys);
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.keys(value)
+    .sort((left, right) => left.localeCompare(right))
+    .reduce((sorted, key) => {
+      sorted[key] = sortJsonKeys(value[key]);
+      return sorted;
+    }, {});
 }
 
 function formatXml(input) {
@@ -201,6 +230,7 @@ function handleFormatChange() {
   const selectedFormat = formatSelect.value;
   sourceInput.placeholder = placeholders[selectedFormat] || "";
   formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
+  updateFormatControls();
 
   if (!sourceInput.value.trim() || formattedOutput.value.trim()) {
     sourceInput.value = formatSamples[selectedFormat] || "";
@@ -208,6 +238,87 @@ function handleFormatChange() {
     formatInput();
   } else {
     updateCounts();
+  }
+}
+
+function handleInputChange() {
+  autoDetectFormat(sourceInput.value);
+  updateCounts();
+}
+
+function autoDetectFormat(value) {
+  const detectedFormat = detectFormat(value);
+  if (!detectedFormat || detectedFormat === formatSelect.value) {
+    return;
+  }
+
+  formatSelect.value = detectedFormat;
+  sourceInput.placeholder = placeholders[detectedFormat] || "";
+  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
+  formattedOutput.value = "";
+  updateFormatControls();
+  setStatus(`Detected ${getFormatLabel()}`, "valid");
+}
+
+function detectFormat(value) {
+  const input = value.trim();
+  if (!input) {
+    return null;
+  }
+
+  if (looksLikeJson(input)) {
+    return "json";
+  }
+
+  if (looksLikeXml(input)) {
+    return "xml";
+  }
+
+  return null;
+}
+
+function looksLikeJson(input) {
+  const first = input[0];
+  const last = input[input.length - 1];
+  return (first === "{" && last === "}") || (first === "[" && last === "]");
+}
+
+function looksLikeXml(input) {
+  return /^<\?xml[\s>]/i.test(input) || /^<[A-Za-z_][\w:.-]*(\s|>|\/>)/.test(input);
+}
+
+function updateFormatControls() {
+  const isJson = formatSelect.value === "json";
+  sortKeys.disabled = !isJson;
+  unescapeButton.disabled = !isJson;
+}
+
+function unescapeJsonString() {
+  if (formatSelect.value !== "json") {
+    setStatus("Unescape is only available for JSON.", "error");
+    return;
+  }
+
+  const input = sourceInput.value.trim();
+  if (!input) {
+    setStatus("Nothing to unescape", "error");
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(input);
+    if (typeof parsed !== "string") {
+      setStatus("Input is valid JSON, but not a JSON string.", "error");
+      return;
+    }
+
+    sourceInput.value = parsed;
+    formattedOutput.value = "";
+    autoDetectFormat(parsed);
+    formatInput();
+    setStatus("Unescaped JSON string", "valid");
+  } catch (error) {
+    setStatus(getJsonErrorMessage(error), "error");
   }
 }
 
@@ -290,3 +401,5 @@ function renderReleaseStamp() {
     releaseStamp.textContent = `Version: ${appRelease}`;
   }
 }
+
+updateFormatControls();

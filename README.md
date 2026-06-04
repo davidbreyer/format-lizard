@@ -11,6 +11,12 @@ For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.m
 - JSON
 - XML
 
+JSON tools:
+
+- Auto-detect JSON/XML from pasted content.
+- Sort object keys before formatting or minifying JSON.
+- Unescape JSON strings, such as `"{\"name\":\"Ada\"}"`, into editable JSON.
+
 Good next candidates:
 
 - YAML, for configuration files.
