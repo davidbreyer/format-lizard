@@ -317,6 +317,18 @@ button:active {
   color: white;
 }
 
+.tree-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tree-actions button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 0.78rem;
+}
+
 .pane-header label {
   font-weight: 900;
 }

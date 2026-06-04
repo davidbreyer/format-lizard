@@ -18,10 +18,13 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const textViewButton = document.querySelector("#textViewButton");
 const treeViewButton = document.querySelector("#treeViewButton");
+const treeActions = document.querySelector("#treeActions");
+const expandTreeButton = document.querySelector("#expandTreeButton");
+const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1827";
+const appRelease = "20260604-1834";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -83,6 +86,8 @@ saveButton.addEventListener("click", saveOutput);
 clearButton.addEventListener("click", clearEditors);
 textViewButton.addEventListener("click", () => setOutputView("text"));
 treeViewButton.addEventListener("click", () => setOutputView("tree"));
+expandTreeButton.addEventListener("click", () => setTreeExpanded(true));
+collapseTreeButton.addEventListener("click", () => setTreeExpanded(false));
 sourceInput.addEventListener("input", handleInputChange);
 formatSelect.addEventListener("change", handleFormatChange);
 indentSelect.addEventListener("change", () => {
@@ -586,6 +591,7 @@ function setOutputView(view) {
   const showTree = view === "tree" && !treeViewButton.disabled;
   formattedOutput.classList.toggle("hidden", showTree);
   treeOutput.classList.toggle("hidden", !showTree);
+  treeActions.classList.toggle("hidden", !showTree);
   textViewButton.classList.toggle("active", !showTree);
   treeViewButton.classList.toggle("active", showTree);
   textViewButton.setAttribute("aria-pressed", String(!showTree));
@@ -611,6 +617,12 @@ function clearTreeOutput() {
   treeOutput.replaceChildren();
   treeViewButton.disabled = true;
   setOutputView("text");
+}
+
+function setTreeExpanded(isExpanded) {
+  treeOutput.querySelectorAll("details").forEach((details) => {
+    details.open = isExpanded;
+  });
 }
 
 function renderJsonTree(value, label) {
