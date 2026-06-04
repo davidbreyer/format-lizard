@@ -99,6 +99,10 @@ h1 {
   gap: 8px;
 }
 
+.file-input {
+  display: none;
+}
+
 .control-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, auto);

@@ -2,7 +2,8 @@
 
 A small JavaScript formatter app, starting with JSON and XML.
 
-Open `index.html` in a browser, paste compact or messy data into the left editor, then format or minify it into the right editor.
+Open `index.html` in a browser, paste compact or messy data into the left editor, or use `Open` to load a local `.json` or `.xml` file.
+Then format or minify it into the right editor.
 Use `Save` to download the formatted output as a `.json` or `.xml` file.
 
 For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).

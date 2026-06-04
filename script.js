@@ -3,6 +3,8 @@ const formattedOutput = document.querySelector("#formattedOutput");
 const formatSelect = document.querySelector("#format");
 const indentSelect = document.querySelector("#indent");
 const sortKeys = document.querySelector("#sortKeys");
+const openButton = document.querySelector("#openButton");
+const fileInput = document.querySelector("#fileInput");
 const formatButton = document.querySelector("#formatButton");
 const minifyButton = document.querySelector("#minifyButton");
 const unescapeButton = document.querySelector("#unescapeButton");
@@ -16,7 +18,7 @@ const inputCount = document.querySelector("#inputCount");
 const outputCount = document.querySelector("#outputCount");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260604-1757";
+const appRelease = "20260604-1807";
 
 const formatSamples = {
   json: JSON.stringify({
@@ -67,6 +69,8 @@ sourceInput.value = formatSamples.json;
 renderReleaseStamp();
 formatInput();
 
+openButton.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", openSelectedFile);
 formatButton.addEventListener("click", formatInput);
 minifyButton.addEventListener("click", minifyInput);
 unescapeButton.addEventListener("click", unescapeJsonString);
@@ -114,6 +118,39 @@ function formatInput() {
   }
 
   updateCounts();
+}
+
+async function openSelectedFile() {
+  const [file] = fileInput.files;
+  fileInput.value = "";
+
+  if (!file) {
+    return;
+  }
+
+  try {
+    const content = await file.text();
+    sourceInput.value = content;
+    formattedOutput.value = "";
+    delete formattedOutput.dataset.outputFormat;
+    applyDetectedOrNamedFormat(content, file.name);
+    formatInput();
+    setStatus(`Opened ${file.name}`, "valid");
+  } catch {
+    setStatus("Could not open file", "error");
+  }
+}
+
+function applyDetectedOrNamedFormat(content, fileName) {
+  const detectedFormat = detectFormat(content) || detectFormatFromFileName(fileName);
+  if (!detectedFormat || detectedFormat === formatSelect.value) {
+    return;
+  }
+
+  formatSelect.value = detectedFormat;
+  sourceInput.placeholder = placeholders[detectedFormat] || "";
+  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
+  updateFormatControls();
 }
 
 function minifyInput() {
@@ -293,6 +330,19 @@ function detectFormat(value) {
   }
 
   if (looksLikeXml(input)) {
+    return "xml";
+  }
+
+  return null;
+}
+
+function detectFormatFromFileName(fileName) {
+  const extension = fileName.split(".").pop().toLowerCase();
+  if (extension === "json") {
+    return "json";
+  }
+
+  if (extension === "xml") {
     return "xml";
   }
 

@@ -4,26 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Format Lizard</title>
-    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260604-1757">
-    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260604-1757">
-    <link rel="stylesheet" href="styles.css?v=20260604-1757">
+    <link rel="icon" type="image/png" href="assets/apple-icon.png?v=20260604-1807">
+    <link rel="apple-touch-icon" href="assets/apple-icon.png?v=20260604-1807">
+    <link rel="stylesheet" href="styles.css?v=20260604-1807">
   </head>
   <body>
     <main class="app-shell">
       <header class="top-bar">
         <div class="brand-lockup">
-          <img src="assets/yelling-lizard-logo.png?v=20260604-1757" alt="" class="brand-logo" width="72" height="72">
+          <img src="assets/yelling-lizard-logo.png?v=20260604-1807" alt="" class="brand-logo" width="72" height="72">
           <div>
             <p class="eyebrow">JSON + XML formatter</p>
             <h1>Format Lizard</h1>
           </div>
         </div>
         <div class="action-bar" aria-label="Formatter actions">
+          <button id="openButton" type="button">Open</button>
           <button id="formatButton" type="button" class="primary-button">Format</button>
           <button id="minifyButton" type="button">Minify</button>
           <button id="copyButton" type="button">Copy</button>
           <button id="saveButton" type="button">Save</button>
           <button id="clearButton" type="button" class="ghost-button">Clear</button>
+          <input id="fileInput" class="file-input" type="file" accept=".json,.xml,.txt,application/json,application/xml,text/xml,text/plain">
         </div>
       </header>
 
@@ -97,11 +99,11 @@
         <span>Ready for tidy data.</span>
         <span>
           <a href="https://github.com/davidbreyer/format-lizard" target="_blank" rel="noreferrer">GitHub</a>
-          <span id="releaseStamp" data-version>Version: 20260604-1757</span>
+          <span id="releaseStamp" data-version>Version: 20260604-1807</span>
         </span>
       </footer>
     </main>
 
-    <script src="script.js?v=20260604-1757"></script>
+    <script src="script.js?v=20260604-1807"></script>
   </body>
 </html>
