@@ -4,6 +4,16 @@ A small JavaScript formatter app, starting with JSON.
 
 Open `index.html` in a browser, paste compact or messy JSON into the left editor, then format or minify it into the right editor.
 
+## GitHub Pages
+
+The site is ready to run from GitHub Pages at:
+
+```text
+https://davidbreyer.github.io/lizard-formatter/
+```
+
+Use the `master` branch and `/ (root)` folder as the Pages source.
+
 ## Release Stamp
 
 The footer displays the current version:

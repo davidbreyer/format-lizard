@@ -259,6 +259,18 @@ textarea::placeholder {
   font-weight: 700;
 }
 
+.app-footer a {
+  color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.app-footer span:has([data-version]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .app-footer [data-version] {
   color: var(--accent);
 }
@@ -320,6 +332,12 @@ textarea::placeholder {
   .app-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .app-footer span:has([data-version]) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .status-pill,
