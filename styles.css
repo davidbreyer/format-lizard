@@ -52,9 +52,9 @@ textarea {
   position: relative;
   z-index: 3;
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) auto;
-  gap: 18px;
-  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
   padding: 18px;
   background: rgba(255, 253, 248, 0.86);
   border: 1px solid var(--line);
@@ -98,9 +98,10 @@ h1 {
   z-index: 4;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .file-input {
