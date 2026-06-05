@@ -49,6 +49,8 @@ textarea {
 }
 
 .top-bar {
+  position: relative;
+  z-index: 3;
   display: grid;
   grid-template-columns: minmax(280px, 1fr) auto;
   gap: 18px;
@@ -92,6 +94,8 @@ h1 {
 }
 
 .action-bar {
+  position: relative;
+  z-index: 4;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -104,6 +108,8 @@ h1 {
 }
 
 .control-panel {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, auto);
   gap: 12px;
@@ -223,6 +229,8 @@ button:active {
 }
 
 .status-row {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
