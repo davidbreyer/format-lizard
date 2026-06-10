@@ -35,6 +35,7 @@ body {
 
 button,
 select,
+summary,
 textarea {
   font: inherit;
 }
@@ -106,6 +107,78 @@ h1 {
 
 .file-input {
   display: none;
+}
+
+.tools-menu {
+  position: relative;
+}
+
+.tools-menu summary {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.tools-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.tools-menu summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.tools-menu[open] summary {
+  border-color: rgba(128, 162, 77, 0.6);
+  background: var(--accent-soft);
+}
+
+.tools-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 10;
+  min-width: 190px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+
+.tools-menu-list a {
+  display: block;
+  padding: 11px 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.tools-menu-list a + a {
+  border-top: 1px solid var(--line);
+}
+
+.tools-menu-list a:hover,
+.tools-menu-list a[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .control-panel {
@@ -206,7 +279,8 @@ button:disabled,
 }
 
 button:hover,
-select:hover {
+select:hover,
+.tools-menu summary:hover {
   border-color: rgba(128, 162, 77, 0.6);
 }
 
@@ -558,6 +632,15 @@ textarea::placeholder {
 
   .action-bar button {
     min-width: 0;
+  }
+
+  .tools-menu,
+  .tools-menu summary {
+    width: 100%;
+  }
+
+  .tools-menu-list {
+    width: 100%;
   }
 
   .checkbox-control {
