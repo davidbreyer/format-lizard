@@ -57,6 +57,21 @@ The CSS palette derives from those colors:
 
 `--accent` is intentionally darker than the exact logo green so white button text and small labels have acceptable contrast. The exact logo greens are still used in tints, gradients, and image assets.
 
+## Shared Tool Identity
+
+The Lizard suite keeps green as its family color and primary-action color. Each tool also has a secondary accent and a compact typographic symbol for quick recognition. Secondary accents are decorative and organizational; success, warning, and error colors retain their semantic meanings.
+
+| Tool | Symbol | Secondary accent |
+| --- | --- | --- |
+| Format Lizard | `{ }` | Teal `#157A70` |
+| Compare Lizard | `A\|B` | Blue `#286F9D` |
+| Mock Lizard | `~` | Magenta `#9B3F72` |
+| Duplicate Lizard | `==` | Amber `#9A5A0A` |
+| DateTime Lizard | `T+` | Cobalt `#365DA8` |
+| Delim Lizard | `,;` | Coral `#B24F37` |
+
+In each app, the secondary identity appears in the header rail, eyebrow, title symbol, and compact section labels. It should not replace the standard green primary buttons or materially change the app's workflow layout.
+
 ## Version Stamp
 
 The app uses a release stamp in this format:

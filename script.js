@@ -24,7 +24,7 @@ const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
 
-const appRelease = "20260617-2109";
+const appRelease = "20260709-2041";
 
 const formatSamples = {
   json: JSON.stringify({
