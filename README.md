@@ -6,6 +6,8 @@ Open `index.html` in a browser, paste compact or messy data into the left editor
 Then format or minify it into the right editor.
 Use `Save` to download the formatted output as a `.json`, `.xml`, `.yaml`, or `.css` file.
 
+The browser remembers the last input, output, format, indentation, key sorting, and text or tree view. **Clear** empties the saved editors.
+
 For logo, color, versioning, and publishing details, see [BRAND_AND_DEPLOYMENT.md](BRAND_AND_DEPLOYMENT.md).
 
 ## Supported Formats

@@ -23,8 +23,12 @@ const expandTreeButton = document.querySelector("#expandTreeButton");
 const collapseTreeButton = document.querySelector("#collapseTreeButton");
 const treeOutput = document.querySelector("#treeOutput");
 const releaseStamp = document.querySelector("#releaseStamp");
+const workspaceStatus = document.querySelector("#workspaceStatus");
 
-const appRelease = "20261104-0806";
+const appRelease = "20261116-2120";
+
+const workspaceStorageKey = "format-lizard.workspace.v1";
+let workspaceSaveTimer = null;
 
 const formatSamples = {
   json: JSON.stringify({
@@ -89,35 +93,116 @@ const formatters = {
   }
 };
 
-sourceInput.value = formatSamples.json;
 renderReleaseStamp();
-formatInput();
+if (!restoreWorkspace()) {
+  sourceInput.value = formatSamples.json;
+  updateFormatControls();
+  formatInput();
+}
 
 openButton.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", openSelectedFile);
-formatButton.addEventListener("click", formatInput);
-minifyButton.addEventListener("click", minifyInput);
-unescapeButton.addEventListener("click", unescapeJsonString);
-jsonToXmlButton.addEventListener("click", convertJsonToXml);
+onWorkspaceAction(formatButton, "click", formatInput);
+onWorkspaceAction(minifyButton, "click", minifyInput);
+onWorkspaceAction(unescapeButton, "click", unescapeJsonString);
+onWorkspaceAction(jsonToXmlButton, "click", convertJsonToXml);
 copyButton.addEventListener("click", copyOutput);
 saveButton.addEventListener("click", saveOutput);
-clearButton.addEventListener("click", clearEditors);
-textViewButton.addEventListener("click", () => setOutputView("text"));
-treeViewButton.addEventListener("click", () => setOutputView("tree"));
+onWorkspaceAction(clearButton, "click", clearEditors);
+onWorkspaceAction(textViewButton, "click", () => setOutputView("text"));
+onWorkspaceAction(treeViewButton, "click", () => setOutputView("tree"));
 expandTreeButton.addEventListener("click", () => setTreeExpanded(true));
 collapseTreeButton.addEventListener("click", () => setTreeExpanded(false));
-sourceInput.addEventListener("input", handleInputChange);
-formatSelect.addEventListener("change", handleFormatChange);
-indentSelect.addEventListener("change", () => {
+sourceInput.addEventListener("input", (event) => {
+  handleInputChange(event);
+  clearTimeout(workspaceSaveTimer);
+  workspaceSaveTimer = setTimeout(saveWorkspace, 250);
+});
+onWorkspaceAction(formatSelect, "change", handleFormatChange);
+onWorkspaceAction(indentSelect, "change", () => {
   if (formattedOutput.value.trim()) {
     formatInput();
   }
 });
-sortKeys.addEventListener("change", () => {
+onWorkspaceAction(sortKeys, "change", () => {
   if (formatSelect.value === "json" && formattedOutput.value.trim()) {
     formatInput();
   }
 });
+window.addEventListener("pagehide", flushWorkspaceSave);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) flushWorkspaceSave();
+});
+
+function onWorkspaceAction(control, event, action) {
+  control.addEventListener(event, () => {
+    action();
+    saveWorkspace();
+  });
+}
+
+function restoreWorkspace() {
+  let workspace;
+  try {
+    const raw = localStorage.getItem(workspaceStorageKey);
+    if (raw === null) return false;
+    workspace = JSON.parse(raw);
+    if (typeof workspace?.input !== "string" || typeof workspace.output !== "string") {
+      throw new Error("Invalid workspace");
+    }
+  } catch {
+    setWorkspaceStatus("Could not restore the saved workspace.");
+    return false;
+  }
+
+  if (typeof workspace.format === "string" && Object.hasOwn(formatters, workspace.format)) {
+    formatSelect.value = workspace.format;
+  }
+  if (Array.from(indentSelect.options).some((option) => option.value === workspace.indent)) {
+    indentSelect.value = workspace.indent;
+  }
+  sortKeys.checked = workspace.sortKeys === true;
+  sourceInput.value = workspace.input;
+  formattedOutput.value = workspace.output;
+  if (workspace.output && typeof workspace.outputFormat === "string" && Object.hasOwn(formatters, workspace.outputFormat)) {
+    formattedOutput.dataset.outputFormat = workspace.outputFormat;
+  }
+  updateFormatControls();
+  updateTreeOutput();
+  setOutputView(workspace.view);
+  updateCounts();
+  setStatus(workspace.input || workspace.output ? "Workspace restored" : "Ready", "idle");
+  setWorkspaceStatus("Workspace saved in this browser.");
+  return true;
+}
+
+function saveWorkspace() {
+  clearTimeout(workspaceSaveTimer);
+  workspaceSaveTimer = null;
+  const workspace = {
+    format: formatSelect.value,
+    indent: indentSelect.value,
+    sortKeys: sortKeys.checked,
+    view: treeViewButton.getAttribute("aria-pressed") === "true" ? "tree" : "text",
+    input: sourceInput.value,
+    output: formattedOutput.value,
+    outputFormat: formattedOutput.dataset.outputFormat ?? null
+  };
+  try {
+    localStorage.setItem(workspaceStorageKey, JSON.stringify(workspace));
+    setWorkspaceStatus("Workspace saved in this browser.");
+  } catch {
+    setWorkspaceStatus("Workspace changes could not be saved.");
+  }
+}
+
+function flushWorkspaceSave() {
+  if (workspaceSaveTimer !== null) saveWorkspace();
+}
+
+function setWorkspaceStatus(message) {
+  if (workspaceStatus.textContent !== message) workspaceStatus.textContent = message;
+}
 
 function formatInput() {
   const input = sourceInput.value.trim();
@@ -167,6 +252,7 @@ async function openSelectedFile() {
     clearTreeOutput();
     applyDetectedOrNamedFormat(content, file.name);
     formatInput();
+    saveWorkspace();
     setStatus(`Opened ${file.name}`, "valid");
   } catch {
     setStatus("Could not open file", "error");
@@ -180,8 +266,6 @@ function applyDetectedOrNamedFormat(content, fileName) {
   }
 
   formatSelect.value = detectedFormat;
-  sourceInput.placeholder = placeholders[detectedFormat] || "";
-  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   updateFormatControls();
 }
 
@@ -976,8 +1060,6 @@ function getIndentString() {
 
 function handleFormatChange() {
   const selectedFormat = formatSelect.value;
-  sourceInput.placeholder = placeholders[selectedFormat] || "";
-  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   updateFormatControls();
 
   if (!sourceInput.value.trim() || formattedOutput.value.trim()) {
@@ -1007,8 +1089,6 @@ function autoDetectFormat(value) {
   }
 
   formatSelect.value = detectedFormat;
-  sourceInput.placeholder = placeholders[detectedFormat] || "";
-  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   formattedOutput.value = "";
   delete formattedOutput.dataset.outputFormat;
   clearTreeOutput();
@@ -1095,6 +1175,8 @@ function looksLikeYaml(input) {
 }
 
 function updateFormatControls() {
+  sourceInput.placeholder = placeholders[formatSelect.value] || "";
+  formattedOutput.placeholder = `Formatted ${getFormatLabel()} will appear here`;
   const isJson = formatSelect.value === "json";
   sortKeys.disabled = !isJson;
   unescapeButton.disabled = !isJson;
@@ -1488,5 +1570,3 @@ function renderReleaseStamp() {
     releaseStamp.textContent = `Version: ${appRelease}`;
   }
 }
-
-updateFormatControls();
