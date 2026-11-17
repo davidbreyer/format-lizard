@@ -105,6 +105,41 @@ h1 {
   gap: 10px;
 }
 
+.version-switch {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.65);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.version-switch a {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.version-switch a[aria-current="page"] {
+  background: var(--tool-accent-soft);
+  color: var(--tool-accent-strong);
+}
+
+.version-switch a:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.version-switch a:focus-visible {
+  outline: 2px solid var(--tool-accent);
+  outline-offset: 2px;
+}
+
 .tool-symbol {
   min-width: 44px;
   height: 32px;
